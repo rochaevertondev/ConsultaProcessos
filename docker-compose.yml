@@ -1,0 +1,25 @@
+services:
+  backend:
+    build: ./backend
+    environment:
+      DATAJUD_API_KEY: ${DATAJUD_API_KEY}
+      DATAJUD_BASE_URL: ${DATAJUD_BASE_URL}
+    ports:
+      - "${BACKEND_PORT}:3001"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health', res => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "${FRONTEND_PORT}:5173"
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5173" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
