@@ -1,0 +1,34 @@
+services:
+  # Backend API
+  - type: web
+    name: botprocesso-backend
+    runtime: node
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node index.js
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: PORT
+        value: 3001
+      - key: DATAJUD_API_KEY
+        sync: false
+      - key: DATAJUD_BASE_URL
+        sync: false
+
+  # Frontend
+  - type: web
+    name: botprocesso-frontend
+    runtime: static
+    region: oregon
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: VITE_API_URL
+        sync: false
