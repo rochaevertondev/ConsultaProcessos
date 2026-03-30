@@ -7,17 +7,25 @@ COPY . .
 RUN npm run build
 
 # Usar nginx para servir arquivos estáticos
-FROM nginx:alpine
+FROM nginx:1.25-alpine
 
+# Remover configuração padrão
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Copiar nova configuração
 COPY --from=builder /app/dist /usr/share/nginx/html
 
+# Criar arquivo de configuração
 RUN echo 'server { \
-  listen 80; \
+  listen 80 default_server; \
+  server_name _; \
+  root /usr/share/nginx/html; \
+  index index.html; \
   location / { \
-    root /usr/share/nginx/html; \
     try_files $uri $uri/ /index.html; \
   } \
 }' > /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
+
 CMD ["nginx", "-g", "daemon off;"]
