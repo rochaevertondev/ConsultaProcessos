@@ -39,26 +39,26 @@ Aplicação para buscar, salvar e notificar movimentações de processos judicia
 ## Como rodar (local, com Docker)
 
 ```bash
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 ### Comandos Úteis
 
 ```bash
 # Iniciar containers
-docker-compose up -d
+docker compose up -d
 
 # Reconstruir após mudanças
-docker-compose up -d --build
+docker compose up -d --build
 
 # Ver logs
-docker-compose logs -f
+docker compose logs -f
 
 # Parar containers
-docker-compose down
+docker compose down
 
 # Limpar tudo
-docker-compose down -v
+docker compose down -v
 ```
 
 ### Limpar localStorage (para testes)

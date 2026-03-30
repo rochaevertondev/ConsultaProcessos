@@ -20,8 +20,9 @@ const ProcessDetails = ({ processo, onSave }) => {
       const isAssunto = linha.includes('Assunto:');
       const isAjuizamento = linha.includes('Ajuizamento:');
       const isUltima = linha.includes('Última Atualização:');
+      const isUltimaMovimentacao = linha.startsWith('📌');
       const isMovimentacao = linha.match(/^\[?\d+\]?\s+\d{2}\/\d{2}\/\d{4}/);
-      const isEmoji = /^[📌🏛️📄⚖️📅🔔]/.test(linha);
+      const isEmoji = /^[📌🏛️📄⚖️📅🔔⚠️]/.test(linha);
       
       return (
         <div 
@@ -53,6 +54,31 @@ const ProcessDetails = ({ processo, onSave }) => {
               <span className="processo-tribunal">{processo.tribunal}</span>
             )}
           </div>
+          
+          {/* Partes do Processo */}
+          {processo.partes ? (
+            (processo.partes.autores?.length > 0 || processo.partes.reus?.length > 0) ? (
+              <div className="processo-partes">
+                {processo.partes.autores?.length > 0 && (
+                  <div className="partes-grupo">
+                    <strong>👤 Autor(a):</strong>
+                    <span>{processo.partes.autores.join(', ')}</span>
+                  </div>
+                )}
+                {processo.partes.reus?.length > 0 && (
+                  <div className="partes-grupo">
+                    <strong>⚖️ Réu(Requerido):</strong>
+                    <span>{processo.partes.reus.join(', ')}</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="processo-partes processo-partes-vazio">
+                <p>⚠️ Partes não disponíveis na API</p>
+              </div>
+            )
+          ) : null}
+          
           <div className="processo-actions">
             <button 
               className="btn-save-processo"

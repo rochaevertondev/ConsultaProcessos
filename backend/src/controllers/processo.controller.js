@@ -30,6 +30,7 @@ export class ProcessoController {
         processo: {
           numero: dadosProcesso.numero,
           tribunal: dadosProcesso.tribunal,
+          partes: dadosProcesso.partes,
           movimentacoes: dadosProcesso.movimentacoes,
           dataUltimaAtualizacao: dadosProcesso.dataUltimaAtualizacao,
           totalMovimentacoes: dadosProcesso.totalMovimentacoes,

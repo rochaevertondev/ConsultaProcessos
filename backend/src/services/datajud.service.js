@@ -76,12 +76,16 @@ export class DataJudService {
 
       // Formata os dados do processo
       const movimentacoes = this._formatarMovimentacoes(processo);
+      
+      // Extrai as partes do processo
+      const partes = this._extrairPartes(processo);
 
       return {
         encontrado: true,
         numero,
         tribunal: tribunalInfo.codigo,
         movimentacoes,
+        partes,
         dataUltimaAtualizacao: processo.dataHoraUltimaAtualizacao,
         totalMovimentacoes: processo.movimentos?.length || 0
       };
@@ -165,6 +169,84 @@ export class DataJudService {
   }
 
   /**
+   * Formata uma data de forma segura
+   * @param {string|Date} data - Data a formatar (ISO, timestamp ou YYYYMMDDHHMMSS)
+   * @param {boolean} incluirHora - Se deve incluir a hora
+   * @returns {string} Data formatada ou empty string
+   * @private
+   */
+  _formatarData(data, incluirHora = false) {
+    if (!data) return '';
+    
+    try {
+      let dataObj;
+      
+      // Se for string numérica sem separadores (YYYYMMDDHHMMSS)
+      if (typeof data === 'string' && /^\d{14,}$/.test(data.trim())) {
+        const dataSemEspacos = data.trim();
+        const ano = dataSemEspacos.substring(0, 4);
+        const mes = dataSemEspacos.substring(4, 6);
+        const dia = dataSemEspacos.substring(6, 8);
+        const hora = dataSemEspacos.substring(8, 10) || '00';
+        const minuto = dataSemEspacos.substring(10, 12) || '00';
+        const segundo = dataSemEspacos.substring(12, 14) || '00';
+        
+        dataObj = new Date(`${ano}-${mes}-${dia}T${hora}:${minuto}:${segundo}`);
+      } else {
+        dataObj = new Date(data);
+      }
+      
+      // Verifica se é uma data válida
+      if (isNaN(dataObj.getTime())) {
+        console.warn('⚠️ Data inválida:', data, '| Tipo:', typeof data);
+        return '';
+      }
+      
+      return incluirHora 
+        ? dataObj.toLocaleString('pt-BR')
+        : dataObj.toLocaleDateString('pt-BR');
+    } catch (error) {
+      console.error('❌ Erro ao formatar data:', error, '| Data original:', data);
+      return '';
+    }
+  }
+
+  /**
+   * Extrai as partes (autores/réus) do processo
+   * @param {Object} processo - Dados do processo
+   * @returns {Object} Partes formatadas {autores: [], reus: []}
+   * @private
+   */
+  _extrairPartes(processo) {
+    const partes = {
+      autores: [],
+      reus: []
+    };
+
+    // Tenta buscar as partes em diferentes campos possíveis
+    const partesLista = processo.partes || processo.polos || [];
+
+    if (Array.isArray(partesLista)) {
+      partesLista.forEach(parte => {
+        const nome = parte.nome || parte.nmParte || 'Parte desconhecida';
+        
+        // Identifica se é autor ou réu baseado no polo ou tipo
+        if (parte.polo === 'ATIVO' || parte.tipo === 'ATIVO' || parte.descricao?.includes('Autor')) {
+          partes.autores.push(nome);
+        } else if (parte.polo === 'PASSIVO' || parte.tipo === 'PASSIVO' || parte.descricao?.includes('Réu')) {
+          partes.reus.push(nome);
+        } else {
+          // Se não conseguir identificar, adiciona como autor por padrão
+          partes.autores.push(nome);
+        }
+      });
+    }
+
+    console.log('👥 Partes extraídas:', partes);
+    return partes;
+  }
+
+  /**
    * Formata as movimentações do processo
    * @param {Object} processo - Dados do processo
    * @returns {string} Movimentações formatadas
@@ -184,12 +266,31 @@ export class DataJudService {
       movimentacoes += `📋 Assunto: ${processo.assuntos[0].nome}\n`;
     }
     if (processo.dataAjuizamento) {
-      const dataAjuiz = new Date(processo.dataAjuizamento).toLocaleDateString('pt-BR');
-      movimentacoes += `📅 Ajuizamento: ${dataAjuiz}\n`;
+      const dataAjuiz = this._formatarData(processo.dataAjuizamento);
+      if (dataAjuiz) {
+        movimentacoes += `📅 Ajuizamento: ${dataAjuiz}\n`;
+      }
     }
+    
+    // Última atualização com a movimentação correspondente
     if (processo.dataHoraUltimaAtualizacao) {
-      const dataAtual = new Date(processo.dataHoraUltimaAtualizacao).toLocaleString('pt-BR');
-      movimentacoes += `🔔 Última Atualização: ${dataAtual}\n`;
+      const dataAtual = this._formatarData(processo.dataHoraUltimaAtualizacao, true);
+      if (dataAtual) {
+        movimentacoes += `⚠️ Última Atualização: ${dataAtual}\n`;
+      }
+      
+      // Encontra a movimentação correspondente à última atualização
+      if (processo.movimentos && processo.movimentos.length > 0) {
+        const ultimaMovimentacao = [...processo.movimentos].sort((a, b) => {
+          return new Date(b.dataHora) - new Date(a.dataHora);
+        })[0];
+        
+        if (ultimaMovimentacao) {
+          const nomeMovimentacao = ultimaMovimentacao.nome || 'Movimentação';
+          movimentacoes += `📌 ${nomeMovimentacao}\n`;
+          console.log(`✅ Última movimentação adicionada: ${nomeMovimentacao}`);
+        }
+      }
     }
 
     // Movimentações
@@ -202,9 +303,11 @@ export class DataJudService {
       });
 
       movimentosOrdenados.forEach((mov, index) => {
-        const data = new Date(mov.dataHora).toLocaleString('pt-BR');
+        const data = this._formatarData(mov.dataHora, true);
         const nome = mov.nome || 'Movimentação';
-        movimentacoes += `[${index + 1}] ${data}\n${nome}\n\n`;
+        if (data) {
+          movimentacoes += `[${index + 1}] ${data}\n${nome}\n\n`;
+        }
       });
     }
 
