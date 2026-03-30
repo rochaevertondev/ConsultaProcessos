@@ -7,9 +7,18 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
   },
+  preview: {
+    host: '0.0.0.0',
+    port: 4173,
+    allowedHosts: [
+      'botprocesso-frontend.onrender.com',
+      'localhost',
+      '127.0.0.1'
+    ]
+  },
   server: {
     host: true,
     port: 5173,
-    strictPort: true,
+    strictPort: false,
   },
 });
