@@ -19,10 +19,11 @@ services:
         sync: false
 
   # Frontend
-  - type: web
+  - type: static
     name: botprocesso-frontend
-    runtime: static
-    buildCommand: cd frontend && npm install && npm run build
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    publishDirectory: dist
     routes:
       - type: rewrite
         source: /*
@@ -30,7 +31,7 @@ services:
     headers:
       - path: /*
         name: Cache-Control
-        value: public, max-age=0, must-revalidate
+        value: public, max-age=3600, must-revalidate
     envVars:
       - key: VITE_API_URL
-        sync: false
+        value: https://botprocesso-backend.onrender.com
