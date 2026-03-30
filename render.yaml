@@ -18,14 +18,19 @@ services:
       - key: DATAJUD_BASE_URL
         sync: false
 
-  # Frontend (usando Nginx para servir arquivos estáticos)
+  # Frontend usando Node server
   - type: web
     name: botprocesso-frontend
-    runtime: docker
+    runtime: node
     region: oregon
     plan: free
     rootDir: frontend
-    dockerfilePath: ./frontend/Dockerfile
+    buildCommand: npm install && npm run build
+    startCommand: npm run preview -- --host 0.0.0.0
     envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: PORT
+        value: 4173
       - key: VITE_API_URL
         value: https://botprocesso-backend.onrender.com
